@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="clearout-token" content="__CLEAROUT_TOKEN__">
+  <meta name="clearout-cols" content="__CLEAROUT_COLS__">
+  <title>Photo clear-out</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="stopped" hidden>
+    The tool has stopped, so nothing on this page works any more. Your marks and undo list are saved.
+    Start it again with <code>./run.sh</code>.
+  </div>
+
+  <header class="bar">
+    <h1>Photo clear-out</h1>
+    <span id="position" class="muted"></span>
+    <span class="spacer"></span>
+    <label class="muted">Grid
+      <select id="size">
+        <option value="1">1 × 1</option>
+        <option value="2">2 × 2</option>
+        <option value="3">3 × 3</option>
+        <option value="4">4 × 4</option>
+        <option value="5">5 × 5</option>
+        <option value="6">6 × 6</option>
+        <option value="7">7 × 7</option>
+        <option value="8">8 × 8</option>
+        <option value="9">9 × 9</option>
+        <option value="10">10 × 10</option>
+        <option value="11">11 × 11</option>
+        <option value="12">12 × 12</option>
+      </select>
+    </label>
+    <button id="prev" title="Previous page (p)">← Prev</button>
+    <button id="next" title="Next page (n)">Next →</button>
+    <span id="marked-count" class="badge" title="Marked for the trash, across all pages">0 marked</span>
+    <button id="trash-page" title="Trash the marked photos on this page now (t)" disabled>Trash marked on page</button>
+    <button id="trashed-count" title="Trashed this session: view and undo">0 trashed</button>
+    <button id="end" class="danger" title="Review all marked photos and trash them (e)">End session</button>
+    <button id="reset" title="Start again from the oldest photo">Start over</button>
+    <button id="help-open" title="Keyboard shortcuts (?)">?</button>
+  </header>
+
+  <div id="days" class="muted"></div>
+  <div id="status" role="status" aria-live="polite"><span id="status-text"></span><button id="status-action" hidden></button></div>
+  <main><div id="grid"></div></main>
+
+  <div id="viewer" hidden>
+    <img id="viewer-img" alt="">
+    <div class="viewer-bar">
+      <span id="viewer-caption"></span>
+      <span class="spacer"></span>
+      <button id="viewer-mark"></button>
+      <button id="viewer-close">Close (Esc)</button>
+    </div>
+  </div>
+
+  <!-- End session, step 1: everything marked, before anything is trashed. -->
+  <div id="review" class="screen" hidden>
+    <div class="bar">
+      <h1 id="review-title"></h1>
+      <span class="spacer"></span>
+      <button id="review-back">← Back (Esc)</button>
+      <button id="review-confirm" class="danger"></button>
+    </div>
+    <p class="hint muted">Click a photo to <strong>keep</strong> it. Everything still marked goes to Immich's trash. You can undo on the next screen.</p>
+    <p id="review-status" class="screen-status" role="status" aria-live="polite"></p>
+    <div id="review-grid" class="screen-grid"></div>
+  </div>
+
+  <!-- Everything trashed this session, with undo. Also end session, step 2. -->
+  <div id="summary" class="screen" hidden>
+    <div class="bar">
+      <h1 id="summary-title"></h1>
+      <span class="spacer"></span>
+      <button id="summary-back">← Back to photos (Esc)</button>
+      <button id="summary-restore-all">Restore all</button>
+      <button id="summary-finish" class="danger">Finish and stop</button>
+    </div>
+    <p class="hint muted">Click a photo to <strong>restore</strong> it (undo). <strong>Finish</strong> stops the tool. After that, trashed photos can still be restored from Immich's Trash page for 30 days.</p>
+    <p id="summary-status" class="screen-status" role="status" aria-live="polite"></p>
+    <div id="summary-grid" class="screen-grid"></div>
+  </div>
+
+  <div id="ended" hidden>
+    <h1>Finished</h1>
+    <p id="ended-msg"></p>
+    <p class="muted">Your place is saved and the tool has stopped, so you can close this tab.<br>
+    Changed your mind? Immich → Trash → Restore, within 30 days.</p>
+  </div>
+
+  <dialog id="help">
+    <h2>Keyboard shortcuts</h2>
+    <table>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></td><td>Move between photos</td></tr>
+      <tr><td><kbd>Space</kbd> or <kbd>d</kbd></td><td>Mark / unmark for the trash</td></tr>
+      <tr><td><kbd>a</kbd></td><td>Mark all on this page / unmark all on this page</td></tr>
+      <tr><td><kbd>Enter</kbd> or <kbd>f</kbd></td><td>View full size (← → to flip, Space to mark)</td></tr>
+      <tr><td><kbd>t</kbd></td><td>Trash the marked photos on this page now</td></tr>
+      <tr><td><kbd>u</kbd></td><td>Undo the last trash</td></tr>
+      <tr><td><kbd>n</kbd> / <kbd>p</kbd> (or <kbd>PageDown</kbd> / <kbd>PageUp</kbd>)</td><td>Next / previous page (marks are kept)</td></tr>
+      <tr><td><kbd>+</kbd> (or <kbd>=</kbd>) / <kbd>-</kbd></td><td>Bigger / smaller grid (1×1 up to 12×12)</td></tr>
+      <tr><td><kbd>e</kbd></td><td>End session: review all marked, trash them</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close full view / go back</td></tr>
+      <tr><td><kbd>?</kbd></td><td>This help</td></tr>
+    </table>
+    <p class="muted">Marking never deletes anything. Marks and the undo list are saved as you go.<br>
+    Closing the tab stops the tool within about 5 seconds (2 minutes if the browser crashed); nothing is lost.</p>
+    <button id="help-close">Close</button>
+  </dialog>
+</body>
+</html>

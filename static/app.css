@@ -1,0 +1,247 @@
+:root {
+  --bg: #16181c;
+  --panel: #22252b;
+  --text: #e8e8ea;
+  --muted: #9a9ea8;
+  --accent: #5b9dff;
+  --danger: #ff5d5d;
+  --ok: #4cc38a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid #000;
+}
+
+.bar h1 { font-size: 17px; margin: 0; }
+.spacer { flex: 1; }
+.muted { color: var(--muted); }
+
+button, select {
+  font: inherit;
+  color: var(--text);
+  background: #30343c;
+  border: 1px solid #444a55;
+  border-radius: 6px;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.4; cursor: default; }
+button.danger:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+#days {
+  padding: 6px 16px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#status { padding: 2px 16px; min-height: 26px; color: var(--muted); }
+#status.error { color: var(--danger); }
+#status.ok { color: var(--ok); }
+
+main { padding: 0 16px 16px; }
+
+/* A square N × N grid. app.js sets --cols and the grid's width so that
+   N rows of square tiles fit the window without scrolling. */
+#grid {
+  --cols: 5;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 4px;
+  margin: 0 auto;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  background: #0d0e10;
+  border-radius: 3px;
+  overflow: hidden;
+  outline: 3px solid transparent;
+  outline-offset: -3px;
+}
+/* First photo of a new day: coloured left edge plus a date label. */
+.tile.new-day { box-shadow: inset 4px 0 0 var(--ok); }
+.day {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 6px 3px 38px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(rgba(0, 0, 0, 0.75), transparent);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Small tiles: drop the time caption and shrink labels so photos stay visible. */
+#grid.dense .cap { display: none; }
+#grid.dense .day { font-size: 10px; padding-left: 24px; }
+#grid.dense .check { width: 18px; height: 18px; top: 3px; left: 3px; font-size: 10px; }
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: zoom-in;
+}
+.tile.focused { outline-color: var(--accent); }
+.tile.marked img { opacity: 0.45; }
+.tile.marked { outline-color: var(--danger); }
+.tile.marked.focused { outline-color: #ff9e9e; }
+
+.check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid #fff;
+}
+.tile.marked .check { background: var(--danger); border-color: var(--danger); }
+.tile.marked .check::after { content: "✕"; color: #fff; font-weight: 700; }
+
+.cap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 6px;
+  font-size: 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
+#viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.94);
+  display: flex;
+  flex-direction: column;
+}
+#viewer[hidden] { display: none; }
+#viewer img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+}
+.viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--panel);
+}
+#viewer.marked .viewer-bar { border-top: 3px solid var(--danger); }
+
+dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid #444a55;
+  border-radius: 8px;
+}
+dialog td { padding: 3px 12px 3px 0; }
+kbd {
+  background: #30343c;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0 5px;
+  font: 13px ui-monospace, monospace;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #30343c;
+  color: var(--muted);
+}
+.badge.some { background: var(--danger); color: #fff; }
+
+/* Full-window screens: review (before trashing) and summary (after). */
+.screen, #ended {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--bg);
+  overflow: auto;
+}
+.screen[hidden], #ended[hidden] { display: none; }
+.screen .hint, .screen-status { padding: 0 16px; }
+.screen-status.error { color: var(--danger); }
+.screen-status.ok { color: var(--ok); }
+.screen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+  padding: 0 16px 24px;
+}
+.review-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  outline: 3px solid var(--danger);
+  outline-offset: -3px;
+}
+.review-tile img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.6; }
+.review-tile .cap { pointer-events: none; }
+/* Kept on the review screen, or restored on the summary: green edge. */
+.review-tile.kept { outline-color: var(--ok); }
+.review-tile.kept img { opacity: 1; }
+.review-tile.busy { opacity: 0.4; pointer-events: none; }
+.review-tile .state {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--danger);
+  color: #fff;
+}
+.review-tile.kept .state { background: var(--ok); }
+
+#ended { padding: 60px 24px; text-align: center; }
+#ended-msg { font-size: 18px; }
+
+#status { display: flex; align-items: center; gap: 10px; }
+#status-action { padding: 2px 10px; }
+
+/* Shown when the tool has stopped (Finish, browser closed, Ctrl+C). */
+#stopped {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 10px 16px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+#stopped[hidden] { display: none; }
